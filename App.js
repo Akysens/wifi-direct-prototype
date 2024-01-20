@@ -4,23 +4,24 @@ import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-function Button({primary, style}) {
+function Button({primary = true, children = null}) {
   return (
-    <Pressable 
+    <Pressable
       style={({pressed}) => {
         if (pressed) {
-          return {...Buttons.buttonPressed, ...style};
+          return {...Buttons.buttonPressed};
         }
         else {
           if (primary) {
-            return {...Buttons.buttonPrimary, ...style};
+            return {...Buttons.buttonPrimary};
           }
 
           else {
-            return {...Buttons.buttonSecondary, ...style};
+            return {...Buttons.buttonSecondary};
           }
         }
       }}>
+        {children}
     </Pressable>
   );
 };
@@ -38,13 +39,23 @@ export default function App() {
         <View style={styles.discoveryPanel}>
           <View style={styles.discoveryStatus}>
             <Text style={styles.body}>You are not connected.</Text>
-            <Text style={styles.body}>Click discover to begin.</Text>
+            <Text style={styles.body}>Tap discover to begin.</Text>
           </View>
           <View style={styles.discoveryDevices}>
 
           </View>
           <View style={styles.discoveryButtonPanel}>
+            <Button primary={true}>
+              <Text style={{...Typography.body, color: Colors.white}}>
+                Discover
+              </Text>
+            </Button>
 
+            <Button primary={true}>
+              <Text style={{...Typography.body, color: Colors.white}}>
+                Connect
+              </Text>
+            </Button>
           </View>
         </View>
         <View style={styles.chatPanel}>
@@ -63,7 +74,7 @@ const styles = StyleSheet.create({
   },
 
   discoveryPanel: {
-    flex: 3.1,
+    flex: 4,
     width: "100%",
     marginVertical: 10,
   },
@@ -73,7 +84,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignContent: "center",
     flex: 0.5,
-    marginTop: 10,
+    marginVertical: 10,
   },
 
   discoveryDevices: {
@@ -84,10 +95,14 @@ const styles = StyleSheet.create({
 
   discoveryButtonPanel: {
     flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignContent: "center",
+    marginVertical: 20,
   },
 
   chatPanel: {
-    flex: 2.9,
+    flex: 2,
   },
 
   header: {

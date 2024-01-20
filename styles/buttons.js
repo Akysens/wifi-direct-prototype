@@ -1,17 +1,19 @@
 export const buttonPrimary = {
     width: 140,
     height: 40,
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 0,
-    borderStyle: "none",
+    borderWidth: 0,
     backgroundColor: "#3FC1C9",
 };
 
 export const buttonPressed = {
     ...buttonPrimary,
-    backgroundColor: "#FC5185",
+    backgroundColor: "#AFAFAF",
 };
 
 export const buttonSecondary = {
     ...buttonPrimary,
-    backgroundColor: "#AFAFAF",
+    backgroundColor: "#FC5185",
 };
