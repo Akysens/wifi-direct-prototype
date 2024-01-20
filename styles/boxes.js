@@ -3,3 +3,13 @@ export const roundedBorder = {
     borderStyle: "solid",
     borderWidth: 1,
 }
+
+export const rounded = {
+    borderRadius: 5,
+    borderStyle: "none",
+}
+
+export const rectangle = {
+    borderRadius: 0,
+    borderStyle: "none",
+}

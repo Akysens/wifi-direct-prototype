@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Typography, Boxes} from './styles';
+import { Typography, Boxes, Colors} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function App() {
@@ -68,13 +68,16 @@ const styles = StyleSheet.create({
 
   header: {
     ...Typography.header,
+    color: Colors.text,
   },
 
   body: {
     ...Typography.body,
+    color: Colors.text,
   },
 
   small: {
     ...Typography.small,
+    color: Colors.text,
   },
 });
