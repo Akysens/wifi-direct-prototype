@@ -3,7 +3,8 @@ import { useFonts } from 'expo-font';
 import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
+// Components
+// TODO: Seperate to files.
 
 function Button({primary = true, children = null}) {
   return (
@@ -26,7 +27,6 @@ function Button({primary = true, children = null}) {
     </Pressable>
   );
 };
-
 
 function DiscoveryStatus() {
   return (
@@ -62,11 +62,15 @@ function DiscoveryButtonPanel() {
   );
 }
 
+// App
+
 export default function App() {
+  // Load Calibri font for the app.
   const [fontsLoaded, fontError] = useFonts({
     "Calibri": require("./assets/fonts/Calibri.ttf"),
   });
 
+  // Main application layout
   return (
     <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Wi-Fi P2P Prototype</Text>
@@ -136,6 +140,4 @@ const styles = StyleSheet.create({
     ...Typography.small,
     color: Colors.text,
   },
-
-
 });
