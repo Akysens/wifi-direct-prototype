@@ -9,3 +9,5 @@ export const box = "#F5F5F5";
 export const buttonPrimary = "#3FC1C9";
 
 export const buttonSecondary = "#FC5185";
+
+export const buttonPressed = "#AFAFAF";

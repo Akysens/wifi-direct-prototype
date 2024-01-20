@@ -11,11 +11,11 @@ export const header = {
 export const body = {
     ...calibri,
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "normal",
 }
 
 export const small = {
     ...calibri,
     fontsize: 12,
-    fontWeight: "bold",
+    fontWeight: "normal",
 }

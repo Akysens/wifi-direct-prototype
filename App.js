@@ -1,7 +1,31 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Typography, Boxes, Colors} from './styles';
+import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+
+function Button({primary, style}) {
+  return (
+    <Pressable 
+      style={({pressed}) => {
+        if (pressed) {
+          return {...Buttons.buttonPressed, ...style};
+        }
+        else {
+          if (primary) {
+            return {...Buttons.buttonPrimary, ...style};
+          }
+
+          else {
+            return {...Buttons.buttonSecondary, ...style};
+          }
+        }
+      }}>
+    </Pressable>
+  );
+};
+
+
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
@@ -13,8 +37,8 @@ export default function App() {
         <Text style={styles.header}>Wi-Fi P2P Prototype</Text>
         <View style={styles.discoveryPanel}>
           <View style={styles.discoveryStatus}>
-            <Text styles={styles.body}>You are not connected.</Text>
-            <Text styles={styles.body}>Click discover to begin.</Text>
+            <Text style={styles.body}>You are not connected.</Text>
+            <Text style={styles.body}>Click discover to begin.</Text>
           </View>
           <View style={styles.discoveryDevices}>
 
@@ -80,4 +104,6 @@ const styles = StyleSheet.create({
     ...Typography.small,
     color: Colors.text,
   },
+
+
 });
