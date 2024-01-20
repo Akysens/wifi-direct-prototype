@@ -6,9 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Components
 // TODO: Seperate to files.
 
-function Button({primary = true, children = null}) {
+function Button({primary = true, children = null, onPress = null}) {
   return (
     <Pressable
+      onPressOut={onPress}
       style={({pressed}) => {
         if (pressed) {
           return {...Buttons.buttonPressed};
