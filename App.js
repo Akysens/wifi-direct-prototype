@@ -3,7 +3,7 @@ import { useFonts } from 'expo-font';
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
-    "InterBlack": require("./assets/fonts/InterBlack.ttf"),
+    "Calibri": require("./assets/fonts/Calibri.ttf"),
   });
 
   return (
@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    fontFamily: "InterBlack",
+    fontFamily: "Calibri",
     fontSize: 30,
   }
 });
