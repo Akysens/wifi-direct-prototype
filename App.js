@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, PermissionsAndroid } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Typography, Boxes, Colors, Buttons} from './styles';
@@ -31,11 +31,19 @@ function Button({primary = true, children = null, onPress = null}) {
   );
 };
 
-function DiscoveryStatus() {
+function DiscoveryStatus({isDiscovering}) {
+
+  if (isDiscovering) {
+    discoveryMessage = <Text style={styles.body}>Discovering...</Text>;
+  }
+  else {
+    discoveryMessage = <Text style={styles.body}>Tap discover to begin.</Text>;
+  }
+
   return (
     <View style={styles.discoveryStatus}>
       <Text style={styles.body}>You are not connected.</Text>
-      <Text style={styles.body}>Tap discover to begin.</Text>
+      {discoveryMessage}
     </View>
   );
 }
@@ -47,10 +55,26 @@ function DiscoveryDeviceList() {
   );
 }
 
-function DiscoveryButtonPanel() {
+function DiscoveryButtonPanel({ setDiscovery, isDiscovering }) {
+    
+  function startDiscovery() {
+    wifiP2P.startDiscoveringPeers().then(() => console.log("Started discovery."))
+                                  .catch(err => console.log(`Discovery failed. ${err}`));
+  }
+
+  function stopDiscovery() {
+    wifiP2P.stopDiscoveringPeers().then(() => console.log("Stopped discovery."))
+                                  .catch(err => console.log(err));
+  }
+
   return (
     <View style={styles.discoveryButtonPanel}>
-      <Button primary={true}>
+      <Button primary={isDiscovering ? false : true} 
+              onPress={() => {
+                if (isDiscovering) stopDiscovery();
+                else startDiscovery();
+                  setDiscovery((isDiscovering ? false : true));
+                }}>
         <Text style={{...Typography.body, color: Colors.white}}>
           Discover
         </Text>
@@ -65,13 +89,24 @@ function DiscoveryButtonPanel() {
   );
 }
 
+function DiscoveryPanel() {
+  const [discovering, setDiscovering] = useState(false);
+
+  return (
+    <View style={styles.discoveryPanel}>
+      <DiscoveryStatus isDiscovering={discovering}></DiscoveryStatus>
+      <DiscoveryDeviceList></DiscoveryDeviceList>
+      <DiscoveryButtonPanel setDiscovery={setDiscovering} isDiscovering={discovering}></DiscoveryButtonPanel>
+    </View>
+  );
+}
+
 async function requestP2PPermissions() {
   try {
     const granted = await PermissionsAndroid.requestMultiple(
       [
         PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_WIFI_STATE,
-        PermissionsAndroid.PERMISSIONS.CHANGE_WIFI_STATE,
+        PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
       ]
     );
 
@@ -85,7 +120,7 @@ async function requestP2PPermissions() {
   catch (err) {
     console.warn(err);
   }
-} 
+}
 
 
 // App
@@ -101,19 +136,14 @@ export default function App() {
     wifiP2P.initialize()
             .then((success) => console.log("Initialization successful."))
             .catch((err) => console.log('initialization failed. Err: ', err));
-
-  })
+  }, [])
 
 
   // Main application layout
   return (
     <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Wi-Fi P2P Prototype</Text>
-        <View style={styles.discoveryPanel}>
-          <DiscoveryStatus></DiscoveryStatus>
-          <DiscoveryDeviceList></DiscoveryDeviceList>
-          <DiscoveryButtonPanel></DiscoveryButtonPanel>
-        </View>
+        <DiscoveryPanel></DiscoveryPanel>
         <View style={styles.chatPanel}>
         </View>
     </SafeAreaView>
@@ -127,6 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
 
   discoveryPanel: {
