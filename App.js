@@ -62,7 +62,7 @@ function DiscoveryStatus({isDiscovering, selection, isConnected}) {
   else if (isConnected === null) {
     connectionMessage = <Text style={styles.small}>You are not connected.</Text>;
   }
-  else {
+  else if (isConnected) {
     connectionMessage = <Text style={styles.small}>Connected: {selection}</Text>;
   }
 
