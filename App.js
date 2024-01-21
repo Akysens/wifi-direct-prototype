@@ -1,7 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View, PermissionsAndroid } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as wifiP2P from  'react-native-wifi-p2p';
 
 // Components
 // TODO: Seperate to files.
@@ -63,13 +65,45 @@ function DiscoveryButtonPanel() {
   );
 }
 
-// App
+async function requestP2PPermissions() {
+  try {
+    const granted = await PermissionsAndroid.requestMultiple(
+      [
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.ACCESS_WIFI_STATE,
+        PermissionsAndroid.PERMISSIONS.CHANGE_WIFI_STATE,
+      ]
+    );
 
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log("Required permissions granted.");
+    }
+    else {
+      console.log("Permissions denied.");
+    }
+  }
+  catch (err) {
+    console.warn(err);
+  }
+} 
+
+
+// App
 export default function App() {
   // Load Calibri font for the app.
   const [fontsLoaded, fontError] = useFonts({
     "Calibri": require("./assets/fonts/Calibri.ttf"),
   });
+  
+
+  useEffect(() => {
+    requestP2PPermissions();
+    wifiP2P.initialize()
+            .then((success) => console.log("Initialization successful."))
+            .catch((err) => console.log('initialization failed. Err: ', err));
+
+  })
+
 
   // Main application layout
   return (
