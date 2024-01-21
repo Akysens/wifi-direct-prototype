@@ -46,13 +46,17 @@ function Button({primary = true, children = null, onPress = null}) {
  * @param {isDiscovering} isDiscovering property for DiscoveryStatus 
  * @returns Displays corresponding status message depending on whether device is discovering or connected. 
  */
-function DiscoveryStatus({isDiscovering}) {
+function DiscoveryStatus({isDiscovering, selection, connected}) {
 
   if (isDiscovering) {
     discoveryMessage = <Text style={styles.body}>Discovering...</Text>;
   }
   else {
     discoveryMessage = <Text style={styles.body}>Tap discover to begin.</Text>;
+  }
+
+  if (selection === null) {
+    <Text style={styles.body}>You are not connected.</Text>
   }
 
   return (
@@ -66,7 +70,7 @@ function DiscoveryStatus({isDiscovering}) {
 /**
  * Discovery device list.
  */
-function DiscoveryDeviceList({devices}) {
+function DiscoveryDeviceList({devices, handleSelect}) {
 
   function DiscoveryListItem({address, status}) {
     return (
@@ -77,12 +81,20 @@ function DiscoveryDeviceList({devices}) {
     )
   };
 
+  const renderItem = ({item}) => {
+    return (
+      <Pressable
+        onPress={handleSelect}>
+          <DiscoveryListItem address={item.deviceAddress} status={item.deviceName}/>
+      </Pressable>
+    );
+  }
+
   return (
     <View style={styles.discoveryDevices}>
       <FlatList
         data={devices}
-        renderItem={({item}) => <DiscoveryListItem address={item.deviceAddress} status={item.status}/>}
-        keyExtractor={({item}) => item.deviceAddress}>
+        renderItem={renderItem}>
       </FlatList>
     </View>
   );
@@ -95,16 +107,15 @@ function DiscoveryDeviceList({devices}) {
  * @returns A view with two buttons, one with the ability of starting and stopping a discovery, 
  * the other with connecting and stopping a connection. 
  */
-function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering }) {
-    
+function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConnected, isConnected, selection}) {
   function startDiscovery() {
     wifiP2P.startDiscoveringPeers().then(() => console.log("Started discovery."))
-                                  .catch(err => console.log(`Discovery failed. ${err.code}`));
+                                  .catch(err => console.log(`Discovery failed. Maybe GPS is off? ${err.message}`));
 
     wifiP2P.subscribeOnPeersUpdates(({devices}) => {
       console.log(`Available devices: ${devices}`);
       setDevices(devices);
-    })
+    });
   }
 
   function stopDiscovery() {
@@ -141,13 +152,15 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering }) {
  */
 function DiscoveryPanel() {
   const [discovering, setDiscovering] = useState(false);
+  const [connected, setConnected] = useState(false);
   const [deviceList, setDeviceList] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState(null);
 
   return (
     <View style={styles.discoveryPanel}>
-      <DiscoveryStatus isDiscovering={discovering} setDevices={setDeviceList}/>
-      <DiscoveryDeviceList devices={deviceList}/>
-      <DiscoveryButtonPanel setDiscovery={setDiscovering} isDiscovering={discovering}/>
+      <DiscoveryStatus isDiscovering={discovering} isConnected={connected} setDevices={setDeviceList}/>
+      <DiscoveryDeviceList devices={deviceList} handleSelect={setSelectedDevice}/>
+      <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} isConnected={connected} setConnected={setConnected} selection={selectedDevice} isDiscovering={discovering}/>
     </View>
   );
 }
@@ -159,9 +172,7 @@ function DiscoveryPanel() {
  */
 async function requestP2PPermissions() {
   try {
-    const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-    );
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log("Required permissions granted.");
@@ -173,6 +184,8 @@ async function requestP2PPermissions() {
   catch (err) {
     console.warn(err);
   }
+
+  
 }
 
 
@@ -236,16 +249,17 @@ const styles = StyleSheet.create({
     flex: 4.6,
     width: "100%",
     ...Boxes.roundedBorder,
+    padding: 5,
   },
 
   discoveryDevice: {
     flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
     height: 40,
     width: "100%",
     backgroundColor: Colors.box,
     elevation: 5,
-    ...Boxes.rectangle,
   },
 
   discoveryButtonPanel: {

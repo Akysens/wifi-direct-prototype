@@ -27,7 +27,8 @@
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.CHANGE_WIFI_STATE",
-        "android.permission.ACCESS_WIFI_STATE"
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.NEARBY_WIFI_DEVICES"
       ],
       "package": "com.akysens.Tutorial"
     },

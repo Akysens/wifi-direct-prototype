@@ -16,6 +16,6 @@ export const body = {
 
 export const small = {
     ...calibri,
-    fontsize: 12,
+    fontSize: 12,
     fontWeight: "normal",
 }
