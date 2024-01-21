@@ -145,9 +145,9 @@ function DiscoveryPanel() {
 
   return (
     <View style={styles.discoveryPanel}>
-      <DiscoveryStatus isDiscovering={discovering} setDevices={setDeviceList}></DiscoveryStatus>
-      <DiscoveryDeviceList devices={deviceList}></DiscoveryDeviceList>
-      <DiscoveryButtonPanel setDiscovery={setDiscovering} isDiscovering={discovering}></DiscoveryButtonPanel>
+      <DiscoveryStatus isDiscovering={discovering} setDevices={setDeviceList}/>
+      <DiscoveryDeviceList devices={deviceList}/>
+      <DiscoveryButtonPanel setDiscovery={setDiscovering} isDiscovering={discovering}/>
     </View>
   );
 }
