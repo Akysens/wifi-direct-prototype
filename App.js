@@ -46,22 +46,29 @@ function Button({primary = true, children = null, onPress = null}) {
  * @param {isDiscovering} isDiscovering property for DiscoveryStatus 
  * @returns Displays corresponding status message depending on whether device is discovering or connected. 
  */
-function DiscoveryStatus({isDiscovering, selection, connected}) {
+function DiscoveryStatus({isDiscovering, selection, isConnected}) {
 
   if (isDiscovering) {
-    discoveryMessage = <Text style={styles.body}>Discovering...</Text>;
+    discoveryMessage = <Text style={styles.small}>Discovering...</Text>;
   }
   else {
-    discoveryMessage = <Text style={styles.body}>Tap discover to begin.</Text>;
+    discoveryMessage = <Text style={styles.small}>Tap discover to begin.</Text>;
   }
 
-  if (selection === null) {
-    <Text style={styles.body}>You are not connected.</Text>
+
+  if ((selection !== null)) {
+    connectionMessage = <Text style={styles.small}>Selected: {selection}</Text>;
+  }
+  else if (isConnected === null) {
+    connectionMessage = <Text style={styles.small}>You are not connected.</Text>;
+  }
+  else {
+    connectionMessage = <Text style={styles.small}>Connected: {selection}</Text>;
   }
 
   return (
     <View style={styles.discoveryStatus}>
-      <Text style={styles.body}>You are not connected.</Text>
+      {connectionMessage}
       {discoveryMessage}
     </View>
   );
@@ -70,7 +77,7 @@ function DiscoveryStatus({isDiscovering, selection, connected}) {
 /**
  * Discovery device list.
  */
-function DiscoveryDeviceList({devices, handleSelect}) {
+function DiscoveryDeviceList({devices, handleSelect, selection}) {
 
   function DiscoveryListItem({address, status}) {
     return (
@@ -84,7 +91,9 @@ function DiscoveryDeviceList({devices, handleSelect}) {
   const renderItem = ({item}) => {
     return (
       <Pressable
-        onPress={handleSelect}>
+        onPress={() => {
+          handleSelect(item.deviceAddress);
+        }}>
           <DiscoveryListItem address={item.deviceAddress} status={item.deviceName}/>
       </Pressable>
     );
@@ -108,19 +117,39 @@ function DiscoveryDeviceList({devices, handleSelect}) {
  * the other with connecting and stopping a connection. 
  */
 function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConnected, isConnected, selection}) {
+  const [subscription, setSubscription] = useState(null);
+
   function startDiscovery() {
     wifiP2P.startDiscoveringPeers().then(() => console.log("Started discovery."))
                                   .catch(err => console.log(`Discovery failed. Maybe GPS is off? ${err.message}`));
 
-    wifiP2P.subscribeOnPeersUpdates(({devices}) => {
-      console.log(`Available devices: ${devices}`);
+    if (subscription === null) {
+    setSubscription(wifiP2P.subscribeOnPeersUpdates(({devices}) => {
+      console.log(`Available devices: ${devices.map((item) => item.deviceAddress)}`);
       setDevices(devices);
-    });
+    }))};
   }
 
   function stopDiscovery() {
     wifiP2P.stopDiscoveringPeers().then(() => console.log("Stopped discovery."))
                                   .catch(err => console.log(err));
+    subscription.remove();
+    setSubscription(null);
+  }
+
+  function connectToDevice(deviceAddress) {
+    console.log(`Selected device: ${deviceAddress}`);
+    wifiP2P.connect(deviceAddress).then(() => console.log(`Connected to address ${deviceAddress} successfully.`))
+                          .catch((err) => console.log(`Connection failed with: ${err.message}`));
+
+    setConnected(deviceAddress);
+  }
+
+  function unconnect() {
+    wifiP2P.cancelConnect().then(() => console.log("Disconnected."))
+                   .catch((err) => console.log(`Connection obliteration failed with: ${err.message}`));
+
+    setConnected(null);
   }
 
   return (
@@ -136,7 +165,12 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
         </Text>
       </Button>
 
-      <Button primary={true}>
+      <Button primary={isConnected ? false : true}
+              onPress={() => {
+                if (isConnected) unconnect();
+                else connectToDevice(selection);
+                  setConnected((isConnected ? false : true));
+                }}>
         <Text style={{...Typography.body, color: Colors.white}}>
           Connect
         </Text>
@@ -152,15 +186,15 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
  */
 function DiscoveryPanel() {
   const [discovering, setDiscovering] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(null);
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   return (
     <View style={styles.discoveryPanel}>
-      <DiscoveryStatus isDiscovering={discovering} isConnected={connected} setDevices={setDeviceList}/>
-      <DiscoveryDeviceList devices={deviceList} handleSelect={setSelectedDevice}/>
-      <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} isConnected={connected} setConnected={setConnected} selection={selectedDevice} isDiscovering={discovering}/>
+      <DiscoveryStatus isDiscovering={discovering} isConnected={connected} selection={selectedDevice}/>
+      <DiscoveryDeviceList devices={deviceList} handleSelect={setSelectedDevice} selection={selectedDevice}/>
+      <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} isConnected={connected} setConnected={setConnected} isDiscovering={discovering} selection={selectedDevice}/>
     </View>
   );
 }
@@ -260,6 +294,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: Colors.box,
     elevation: 5,
+    marginBottom: 10,
   },
 
   discoveryButtonPanel: {
