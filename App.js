@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, PermissionsAndroid } from 'react-native';
+import { Pressable, StyleSheet, Text, View, PermissionsAndroid, ScrollView, FlatList } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,15 @@ import * as wifiP2P from  'react-native-wifi-p2p';
 
 // Components
 // TODO: Seperate to files.
+
+/**
+ * Button with Pressable of React-Native.
+ * 
+ * @param {{primary: boolean, children: any, onPress: function}} properties of Button  
+ * @returns A button JSX component, where the onPress function is called when user presses out of the button.
+ * Button's look is changed depending on its a "primary" button or not.
+ * Style also changes when its pressed. 
+ */
 
 function Button({primary = true, children = null, onPress = null}) {
   return (
@@ -31,6 +40,12 @@ function Button({primary = true, children = null, onPress = null}) {
   );
 };
 
+/**
+ * Discovery status messages for discovery panel.
+ * 
+ * @param {isDiscovering} isDiscovering property for DiscoveryStatus 
+ * @returns Displays corresponding status message depending on whether device is discovering or connected. 
+ */
 function DiscoveryStatus({isDiscovering}) {
 
   if (isDiscovering) {
@@ -48,18 +63,48 @@ function DiscoveryStatus({isDiscovering}) {
   );
 }
 
-function DiscoveryDeviceList() {
+/**
+ * Discovery device list.
+ */
+function DiscoveryDeviceList({devices}) {
+
+  function DiscoveryListItem({address, status}) {
+    return (
+      <View style={styles.discoveryDevice}>
+        <Text style={styles.small}>{address}</Text>
+        <Text style={styles.small}>{status}</Text>
+      </View>
+    )
+  };
+
   return (
     <View style={styles.discoveryDevices}>
+      <FlatList
+        data={devices}
+        renderItem={({item}) => <DiscoveryListItem address={item.deviceAddress} status={item.status}/>}
+        keyExtractor={({item}) => item.deviceAddress}>
+      </FlatList>
     </View>
   );
 }
 
-function DiscoveryButtonPanel({ setDiscovery, isDiscovering }) {
+/**
+ * Button panel for discovery.
+ * 
+ * @param {*} props for DiscoveryButtonPanel 
+ * @returns A view with two buttons, one with the ability of starting and stopping a discovery, 
+ * the other with connecting and stopping a connection. 
+ */
+function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering }) {
     
   function startDiscovery() {
     wifiP2P.startDiscoveringPeers().then(() => console.log("Started discovery."))
-                                  .catch(err => console.log(`Discovery failed. ${err}`));
+                                  .catch(err => console.log(`Discovery failed. ${err.code}`));
+
+    wifiP2P.subscribeOnPeersUpdates(({devices}) => {
+      console.log(`Available devices: ${devices}`);
+      setDevices(devices);
+    })
   }
 
   function stopDiscovery() {
@@ -89,25 +134,33 @@ function DiscoveryButtonPanel({ setDiscovery, isDiscovering }) {
   );
 }
 
+/**
+ * Discovery Panel
+ * 
+ * @returns A view with DiscoveryStatus, DiscoveryDeviceList, and DiscoveryButtonPanel.
+ */
 function DiscoveryPanel() {
   const [discovering, setDiscovering] = useState(false);
+  const [deviceList, setDeviceList] = useState([]);
 
   return (
     <View style={styles.discoveryPanel}>
-      <DiscoveryStatus isDiscovering={discovering}></DiscoveryStatus>
-      <DiscoveryDeviceList></DiscoveryDeviceList>
+      <DiscoveryStatus isDiscovering={discovering} setDevices={setDeviceList}></DiscoveryStatus>
+      <DiscoveryDeviceList devices={deviceList}></DiscoveryDeviceList>
       <DiscoveryButtonPanel setDiscovery={setDiscovering} isDiscovering={discovering}></DiscoveryButtonPanel>
     </View>
   );
 }
 
+
+/**
+ * An async function that requests ACCESS_FINE_LOCATION permission
+ * from the device it runs on.
+ */
 async function requestP2PPermissions() {
   try {
-    const granted = await PermissionsAndroid.requestMultiple(
-      [
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.NEARBY_WIFI_DEVICES,
-      ]
+    const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
     );
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
@@ -123,7 +176,12 @@ async function requestP2PPermissions() {
 }
 
 
-// App
+/**
+ * Main application
+ * Requests required permissions and initializes wifiP2P manager.
+ * 
+ * @returns A SafeAreaView that contains Discovery and Chat panel.
+ */
 export default function App() {
   // Load Calibri font for the app.
   const [fontsLoaded, fontError] = useFonts({
@@ -170,14 +228,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignContent: "center",
-    flex: 0.25,
+    flex: 0.4,
     marginVertical: 10,
   },
 
   discoveryDevices: {
-    flex: 4.75,
+    flex: 4.6,
     width: "100%",
     ...Boxes.roundedBorder,
+  },
+
+  discoveryDevice: {
+    flexDirection: "column",
+    alignItems: "center",
+    height: 40,
+    width: "100%",
+    backgroundColor: Colors.box,
+    elevation: 5,
+    ...Boxes.rectangle,
   },
 
   discoveryButtonPanel: {
