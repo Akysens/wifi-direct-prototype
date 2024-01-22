@@ -116,7 +116,7 @@ function DiscoveryDeviceList({devices, handleSelect, selection}) {
  * @returns A view with two buttons, one with the ability of starting and stopping a discovery, 
  * the other with connecting and stopping a connection. 
  */
-function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConnected, connectedDevice, selection}) {
+function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConnected, connectedDevice, selection, setConnectionAddresses, connectionAddresses}) {
   const [subscription, setSubscription] = useState(null);
 
   function startDiscovery() {
@@ -144,8 +144,7 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
 
     wifiP2P.getConnectionInfo().then((info) => {
       console.log("Connection information:", info);
-    })
-    .catch((err) => {console.log("Connection info failed with:", err)});
+    }).catch((err) => console.log("Connection info failed:", err));
 
     setConnected(deviceAddress);
   }
@@ -154,7 +153,7 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
     wifiP2P.getGroupInfo()
     .then(() => wifiP2P.removeGroup())
     .then(() => console.log('Succesfully disconnected!'))
-    .catch(err => console.log('Disconnect failed. Details: ', err))
+    .catch(err => console.log('Disconnect failed. Details: ', err));
 
     setConnected(null);
   }
@@ -197,7 +196,7 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
  * 
  * @returns A view with DiscoveryStatus, DiscoveryDeviceList, and DiscoveryButtonPanel.
  */
-function DiscoveryPanel({connectedDevice, setConnected}) {
+function DiscoveryPanel({connectedDevice, setConnected, setConnectionAddresses, connectionAddresses}) {
   const [discovering, setDiscovering] = useState(false);
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
@@ -206,32 +205,57 @@ function DiscoveryPanel({connectedDevice, setConnected}) {
     <View style={styles.discoveryPanel}>
       <DiscoveryStatus isDiscovering={discovering} isConnected={connectedDevice} selection={selectedDevice}/>
       <DiscoveryDeviceList devices={deviceList} handleSelect={setSelectedDevice} selection={selectedDevice}/>
-      <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} isConnected={connectedDevice} setConnected={setConnected} isDiscovering={discovering} selection={selectedDevice} connectedDevice={connectedDevice}/>
+      <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} setConnected={setConnected} 
+        isDiscovering={discovering} selection={selectedDevice} connectedDevice={connectedDevice} connectionAddresses={connectionAddresses} 
+        setConnectionAddresses={setConnectionAddresses}/>
     </View>
   );
 }
 
 
-function ChatButtonPanel({message, setMessage, setReceived, connectedDevice}) {
+function ChatButtonPanel({message, setMessage, setReceived, connectedDevice, connectionAddresses, setConnectionAddresses}) {
   function handleSend() {
     if (connectedDevice !== null) {
-      wifiP2P.sendMessage(message).then((meta) => 
-      console.log("Message sent:" , meta.message))
-      .catch((err) => console.log("Message failed with:", err))
-      setMessage(null);
+      wifiP2P.getConnectionInfo().then((info) => {
+        console.log(info)
+        if (info.isGroupOwner) {
+          connectionAddresses.forEach(address => {
+            wifiP2P.sendMessageTo(message, address).then((meta) => 
+            console.log("Message sent to", address, ":" , meta.message))
+            .catch((err) => console.log("Message to", address, " failed with:", err))
+            setMessage(null);
+          });
+        }
+
+        else if (!info.isGroupOwner) {
+          wifiP2P.sendMessage(message).then((meta) => 
+          console.log("Message sent:" , meta.message))
+          .catch((err) => console.log("Message failed with:", err))
+          setMessage(null);
+        }
+      });
     }
   }
 
   function handleReceive() {
-    wifiP2P.getGroupInfo().then((info) => console.log(info));
-    console.log("Trying to receive from:", connectedDevice);
-  
-    if ((connectedDevice !== null)) {
-      wifiP2P.receiveMessage().then((receivedText) => {
-        console.log("Message received: ", receivedText);
-        setReceived(receivedText);
-        }).catch((err) => console.log("Message could not be received. ", err));
-    };
+    wifiP2P.getConnectionInfo().then((info) => {
+      console.log(info);
+      console.log("Trying to receive from:", connectedDevice);
+    
+      if ((connectedDevice !== null)) {
+        wifiP2P.receiveMessage({meta: true}).then(({fromAddress, message}) => {
+          console.log("Message received from:", fromAddress);
+          setReceived(message);
+          if (info.isGroupOwner) {
+            if (connectionAddresses !== null && connectionAddresses.includes(fromAddress))
+            console.log("GO address list:", connectionAddresses);
+            else {
+              setConnectionAddresses([...connectionAddresses, fromAddress]);
+              console.log("GO address list:", connectionAddresses);
+            }
+          }
+          }).catch((err) => console.log("Message could not be received. ", err));
+      }});
   }
 
   return (
@@ -259,7 +283,7 @@ function ChatReceiving({receivedMessage}) {
   );
 }
 
-function ChatPanel({connectedDevice}) {
+function ChatPanel({connectedDevice, setConnectionAddresses, connectionAddresses}) {
   const [message, setMessage] = useState(null); // message to be sent
   const [received, setReceived] = useState(null); // message received
 
@@ -270,7 +294,8 @@ function ChatPanel({connectedDevice}) {
                  placeholder='Message'
                  onChangeText={setMessage}
                  value={message}/>
-      <ChatButtonPanel message={message} setMessage={setMessage} connectedDevice={connectedDevice} setReceived={setReceived}></ChatButtonPanel>
+      <ChatButtonPanel message={message} setMessage={setMessage} connectedDevice={connectedDevice} setReceived={setReceived} 
+        setConnectionAddresses={setConnectionAddresses} connectionAddresses={connectionAddresses}></ChatButtonPanel>
     </View>
   );
 }
@@ -310,6 +335,7 @@ export default function App() {
   });
   
   const [connectedDevice, setConnected] = useState(null);
+  const [connectionAddresses, setConnectionAddresses] = useState([]);
 
   useEffect(() => {
     requestP2PPermissions();
@@ -323,8 +349,8 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Wi-Fi P2P Prototype</Text>
-        <DiscoveryPanel connectedDevice={connectedDevice} setConnected={setConnected}></DiscoveryPanel>
-        <ChatPanel connectedDevice={connectedDevice}></ChatPanel>
+        <DiscoveryPanel connectedDevice={connectedDevice} setConnected={setConnected} setConnectionAddresses={setConnectionAddresses} connectionAddresses={connectionAddresses}> </DiscoveryPanel>
+        <ChatPanel connectedDevice={connectedDevice} connectionAddresses={connectionAddresses} setConnectionAddresses={setConnectionAddresses}></ChatPanel>
     </SafeAreaView>
   );
 }
