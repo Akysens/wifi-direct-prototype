@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, PermissionsAndroid, ScrollView, FlatList } from 'react-native';
+import { Pressable, StyleSheet, Text, View, PermissionsAndroid, ScrollView, FlatList, TextInput } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Typography, Boxes, Colors, Buttons} from './styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -56,13 +56,13 @@ function DiscoveryStatus({isDiscovering, selection, isConnected}) {
   }
 
 
-  if ((selection !== null)) {
+  if ((selection !== null && isConnected === null)) {
     connectionMessage = <Text style={styles.small}>Selected: {selection}</Text>;
   }
   else if (isConnected === null) {
     connectionMessage = <Text style={styles.small}>You are not connected.</Text>;
   }
-  else if (isConnected) {
+  else if (isConnected !== null) {
     connectionMessage = <Text style={styles.small}>Connected: {selection}</Text>;
   }
 
@@ -153,14 +153,14 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
   }
 
   return (
-    <View style={styles.discoveryButtonPanel}>
+    <View style={styles.ButtonPanel}>
       <Button primary={isDiscovering ? false : true} 
               onPress={() => {
                 if (isDiscovering) stopDiscovery();
                 else startDiscovery();
                   setDiscovery((isDiscovering ? false : true));
                 }}>
-        <Text style={{...Typography.body, color: Colors.white}}>
+        <Text style={styles.buttonText}>
           Discover
         </Text>
       </Button>
@@ -171,7 +171,7 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
                 else connectToDevice(selection);
                   setConnected((isConnected ? false : true));
                 }}>
-        <Text style={{...Typography.body, color: Colors.white}}>
+        <Text style={styles.buttonText}>
           Connect
         </Text>
       </Button>
@@ -184,9 +184,8 @@ function DiscoveryButtonPanel({setDevices, setDiscovery, isDiscovering, setConne
  * 
  * @returns A view with DiscoveryStatus, DiscoveryDeviceList, and DiscoveryButtonPanel.
  */
-function DiscoveryPanel() {
+function DiscoveryPanel({connected, setConnected}) {
   const [discovering, setDiscovering] = useState(false);
-  const [connected, setConnected] = useState(null);
   const [deviceList, setDeviceList] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState(null);
 
@@ -195,6 +194,78 @@ function DiscoveryPanel() {
       <DiscoveryStatus isDiscovering={discovering} isConnected={connected} selection={selectedDevice}/>
       <DiscoveryDeviceList devices={deviceList} handleSelect={setSelectedDevice} selection={selectedDevice}/>
       <DiscoveryButtonPanel setDiscovery={setDiscovering} setDevices={setDeviceList} isConnected={connected} setConnected={setConnected} isDiscovering={discovering} selection={selectedDevice}/>
+    </View>
+  );
+}
+
+
+function ChatButtonPanel({message, setMessage, isSending, setSending, setReceiving}) {
+
+  async function handleSend() {
+    wifiP2P.getConnectionInfo().then(() => {
+      wifiP2P.sendMessage(message).then(() => console.log("Message sent."))
+      .catch((err) => console.log("Message failed with:", err))
+    })
+    setMessage(null);
+  }
+
+  function send() {
+    setSending(true);
+    setReceiving(false);
+    handleSend();
+    setSending(false);
+  }
+
+  return (
+  <View style={{...styles.ButtonPanel, justifyContent: "center"}}>
+    <Button primary={true}
+            onPress={send}>
+      <Text style={styles.buttonText}>Send</Text>
+    </Button>
+  </View>
+  );
+}
+
+function ChatReceiving({receivedMessage}) {
+  const placeholder = "Received message will show here.";
+  
+  return (
+    <View style={{marginBottom: 20}}>
+      <Text style={styles.body}>{receivedMessage}</Text>
+    </View>
+  );
+}
+
+function ChatPanel({connected}) {
+  const [receiving, setReceiving] = useState(false); // mutex for receiving
+  const [sending, setSending] = useState(false); // mutex for sending
+  const [message, setMessage] = useState(""); // message to be sent
+  const [received, setReceived] = useState(""); // message received
+
+  async function handleReceive() {
+    if (connected) {
+      // to do, synchronization problem
+      wifiP2P.getConnectionInfo().then((info) => {
+      console.log(info);
+      wifiP2P.receiveMessage().then((receivedText) => {
+        console.log("Message received: ", receivedText);
+        setReceived(receivedText);
+      }).catch((err) => console.log("Message could not be received. ", err));
+    })};
+  }
+
+  useEffect(() => {
+      handleReceive();
+  });
+
+  return (
+    <View style={styles.chatPanel}>
+      <ChatReceiving receivedMessage={received}/>
+      <TextInput style={styles.textInputBox} 
+                 placeholder='Message'
+                 onChangeText={setMessage}
+                 value={message}/>
+      <ChatButtonPanel message={message} setMessage={setMessage} isSending={sending} setSending={setSending} setReceiving={setReceiving}></ChatButtonPanel>
     </View>
   );
 }
@@ -218,8 +289,6 @@ async function requestP2PPermissions() {
   catch (err) {
     console.warn(err);
   }
-
-  
 }
 
 
@@ -235,6 +304,7 @@ export default function App() {
     "Calibri": require("./assets/fonts/Calibri.ttf"),
   });
   
+  const [connected, setConnected] = useState(null);
 
   useEffect(() => {
     requestP2PPermissions();
@@ -248,9 +318,8 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
         <Text style={styles.header}>Wi-Fi P2P Prototype</Text>
-        <DiscoveryPanel></DiscoveryPanel>
-        <View style={styles.chatPanel}>
-        </View>
+        <DiscoveryPanel connected={connected} setConnected={setConnected}></DiscoveryPanel>
+        <ChatPanel connected={connected}></ChatPanel>
     </SafeAreaView>
   );
 }
@@ -297,7 +366,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  discoveryButtonPanel: {
+  ButtonPanel: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -305,8 +374,16 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
 
+  textInputBox: {
+    width: "100%",
+    height: 40,
+    paddingHorizontal: 5,
+    ...Boxes.roundedBorder,
+  },
+
   chatPanel: {
     flex: 2,
+    width: "100%",
   },
 
   header: {
@@ -323,4 +400,9 @@ const styles = StyleSheet.create({
     ...Typography.small,
     color: Colors.text,
   },
+
+  buttonText: {
+    ...Typography.body, 
+    color: Colors.white
+  }
 });

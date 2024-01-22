@@ -6,10 +6,8 @@ export const roundedBorder = {
 
 export const rounded = {
     borderRadius: 5,
-    borderStyle: "none",
 }
 
 export const rectangle = {
     borderRadius: 0,
-    borderStyle: "none",
 }
