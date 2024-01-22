@@ -213,6 +213,7 @@ function ChatButtonPanel({message, setMessage, isSending, setSending, setReceivi
     setSending(true);
     setReceiving(false);
     handleSend();
+    setReceiving(true);
     setSending(false);
   }
 
@@ -237,20 +238,20 @@ function ChatReceiving({receivedMessage}) {
 }
 
 function ChatPanel({connected}) {
-  const [receiving, setReceiving] = useState(false); // mutex for receiving
+  const [receiving, setReceiving] = useState(true); // mutex for receiving
   const [sending, setSending] = useState(false); // mutex for sending
   const [message, setMessage] = useState(""); // message to be sent
   const [received, setReceived] = useState(""); // message received
 
   async function handleReceive() {
-    if (connected) {
+    if (connected && receiving) {
       // to do, synchronization problem
       wifiP2P.getConnectionInfo().then((info) => {
-      console.log(info);
-      wifiP2P.receiveMessage().then((receivedText) => {
-        console.log("Message received: ", receivedText);
-        setReceived(receivedText);
-      }).catch((err) => console.log("Message could not be received. ", err));
+        console.log(info);
+        wifiP2P.receiveMessage().then((receivedText) => {
+          console.log("Message received: ", receivedText);
+          setReceived(receivedText);
+        }).catch((err) => console.log("Message could not be received. ", err));
     })};
   }
 
