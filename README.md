@@ -3,8 +3,6 @@
 A prototype for testing **Android Wi-Fi Direct (P2P)** messaging using **React Native**, **Expo**, and **react-native-wifi-p2p**.  
 Built to explore peer-to-peer connections in Android devices, for a bigger project that aims to create a mesh network with the peer connections. 
 
----
-
 ## Overview
 
 This prototype allows to:
@@ -14,23 +12,17 @@ This prototype allows to:
 
 The received message appears in the app’s interface.
 
----
-
 ## Demo
 
 <img src="./assets/img/demo1.jpg" alt="Prototype Demo Screenshot 1" width="300" />
 <img src="./assets/img/demo2.jpg" alt="Prototype Demo Screenshot 2" width="300" />
 <img src="./assets/img/demo3.jpg" alt="Prototype Demo Screenshot 3" width="300" />
 
----
-
 ## Tech
 
 - [React Native](https://reactnative.dev/)  
 - [Expo](https://docs.expo.dev/)  
 - [react-native-wifi-p2p](https://github.com/kirillzyusko/react-native-wifi-p2p)
-
----
 
 ## Setup & Run
 
