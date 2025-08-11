@@ -18,9 +18,9 @@ The received message appears in the app’s interface.
 
 ## Demo
 
-<img src="./assets/demo1.jpg" alt="Prototype Demo Screenshot 1" width="300" />
-<img src="./assets/demo2.jpg" alt="Prototype Demo Screenshot 2" width="300" />
-<img src="./assets/demo3.jpg" alt="Prototype Demo Screenshot 3" width="300" />
+<img src="./assets/img/demo1.jpg" alt="Prototype Demo Screenshot 1" width="300" />
+<img src="./assets/img/demo2.jpg" alt="Prototype Demo Screenshot 2" width="300" />
+<img src="./assets/img/demo3.jpg" alt="Prototype Demo Screenshot 3" width="300" />
 
 ---
 
