@@ -33,11 +33,11 @@ The received message appears in the app’s interface.
 
 **Steps**
 
-### 1. Clone the repo
-### 2. Install dependencies
-```npm install``` or ```yarn / pnpm install```
-### 4. [Create a development build APK file for the application.](https://docs.expo.dev/guides/local-app-development/)
-### 5. Install the development build to the target device.
-### 6. Start the Metro bundler for the project
-```npx expo start```
-### 7. Scan the QR code once displayed to connect the Metro bundler to the development build.
+1. Clone the repo
+2. Install dependencies
+    ```npm install``` or ```yarn / pnpm install```
+3. [Create a development build APK file for the application.](https://docs.expo.dev/guides/local-app-development/)
+4. Install the development build to the target device.
+5. Start the Metro bundler for the project
+    ```npx expo start```
+6. Scan the QR code once displayed to connect the Metro bundler to the development build.
